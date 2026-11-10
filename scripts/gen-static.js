@@ -3,7 +3,7 @@
  *
  * 为什么需要：站点是单页应用，60 条内容全靠 app.js 画。Googlebot / Bingbot 会
  * 执行 JS 所以看得见，但百度和绝大多数 AI 爬虫（GPTBot、ClaudeBot、PerplexityBot）
- * 不执行，它们只拿到 <head> 和 hero 那几行字。对一个内容即产品的知识图谱站，
+ * 不执行，它们只拿到 <head> 和 hero 那几行字。对一个内容即产品的百科站，
  * 等于主要内容全部不可索引，AI 答案引擎也引用不到具体条目。
  *
  * 做三件事，都写在 index.html / sitemap.xml 里，重跑整块覆盖：
@@ -12,7 +12,7 @@
  *   2. 条目级 JSON-LD —— ItemList + 每条实体。tags 声明成 knowsAbout，
  *      post 声明成 subjectOf，github 声明成 sameAs / codeRepository：
  *      这是把实体之间的关系讲给搜索引擎和 AI 答案引擎听的正规位置，
- *      也是「知识图谱」这个定位在数据层面唯一能被机器验证的地方。
+ *      也是「百科」这个定位在数据层面唯一能被机器验证的地方。
  *   3. sitemap.xml 的 <lastmod> 同步成 entries.js 的 updated（原来是手工活，容易忘）。
  *
  * 用法：改完 data/entries.js 后跑一次
@@ -91,7 +91,7 @@ function buildLd(ALL) {
     '@context': 'https://schema.org',
     '@graph': [{
       '@type': 'ItemList',
-      name: 'AISec123 · 全网最全 AI 安全知识图谱',
+      name: 'AISecpedia · AI 安全百科',
       description: '收录的 AI 安全实体：企业、开源项目、深度文章、标准与数据集。',
       url: SITE,
       numberOfItems: items.length,

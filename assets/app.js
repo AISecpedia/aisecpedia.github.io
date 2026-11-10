@@ -15,7 +15,10 @@
     set: function (k, v) { try { localStorage.setItem(KEY + '-' + k, v); } catch (e) {} }
   };
 
-  var state = { sec: 'all', q: '', tag: '', sort: 'default', view: 'grid' };
+  var state = { sec: 'all', q: '', tag: '', sort: 'default', view: 'grid', aiMatches: null, aiQuery: '' };
+  /* AI 搜索 Worker 域名（index.html 里 window.AISEC123_WORKER 配置）。
+     留空 = 不调 LLM，搜索框退化为纯本地关键词过滤。 */
+  var WORKER_BASE = (window.AISEC123_WORKER || '').replace(/\/+$/, '');
   var lang = LS.get('lang', 'zh');
   var theme = LS.get('theme', window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 
@@ -23,7 +26,10 @@
      缓存、切语言时还原，绝不另写一份 —— 之前 applyLang 把 title 硬改成「AI 安全导航」，
      Googlebot / Bingbot 渲染 JS 后拿到的就是那个，head 里布的关键词全被丢掉。 */
   var TITLE_ZH = document.title;
-  var TITLE_EN = 'AISec123 · The Most Complete AI Security Knowledge Graph｜Companies · Open Source · Papers · Benchmarks';
+  var TITLE_EN = 'AISecpedia · The AI Security Encyclopedia｜Companies · Open Source · Papers · Benchmarks';
+  /* 页头副标按字符均布撑满字标宽度，中英两版左右边缘对齐（见 .brand-tag）。
+     英文用短版，保证自然宽度不超过字标，space-between 只加间距不压缩。 */
+  var BRAND_TAG = { zh: 'AI 安全百科', en: 'Security Encyclopedia' };
 
   /* ── 工具函数 ─────────────────────────────────────────── */
   function $(s) { return document.querySelector(s); }
@@ -95,6 +101,15 @@
     document.title = lang === 'en' ? TITLE_EN : TITLE_ZH;
     var lb = $('#lang-toggle');
     if (lb) lb.textContent = lang === 'en' ? '中' : 'EN';
+    renderBrandTag();
+  }
+
+  /* 副标拆成单字 span，靠 .brand-tag 的 space-between 均布撑满字标宽度。 */
+  function renderBrandTag() {
+    var el = $('.brand-tag');
+    if (!el) return;
+    var txt = BRAND_TAG[lang] || BRAND_TAG.zh;
+    el.innerHTML = Array.from(txt).map(function (ch) { return '<span>' + esc(ch) + '</span>'; }).join('');
   }
 
   function applyTheme() {
@@ -127,7 +142,20 @@
   }
 
   function renderList() {
-    var hit = ALL.filter(matches);
+    /* AI 搜索激活时，列表只展示模型挑中的条目（按模型排序），不再做关键词匹配 ——
+       自然语言查询往往命中不了关键词，避免下方列表空掉。关闭面板后回到本地过滤。 */
+    var hit;
+    if (state.aiMatches) {
+      var order = state.aiMatches;
+      hit = ALL.filter(function (e) {
+        if (order.indexOf(e.name) < 0) return false;
+        if (state.sec !== 'all' && e.section !== state.sec) return false;
+        if (state.tag && (e.tags || []).indexOf(state.tag) < 0) return false;
+        return true;
+      }).sort(function (a, b) { return order.indexOf(a.name) - order.indexOf(b.name); });
+    } else {
+      hit = ALL.filter(matches);
+    }
     var cur = byKey[state.sec];
     var crumb = ['<b>' + esc(cur ? (lang === 'en' ? cur.en : cur.zh) : t('全部收录', 'Everything')) + '</b>',
                  '<span class="crumb-sep">·</span>',
@@ -136,7 +164,11 @@
       crumb.push('<span class="crumb-sep">·</span>',
         '<button type="button" class="crumb-clear" data-clear="1">#' + esc(tagLabel(state.tag)) + ' ×</button>');
     }
-    if (state.q.trim()) crumb.push('<span class="crumb-sep">·</span>', esc(t('关键词', 'for')) + ' "' + esc(state.q.trim()) + '"');
+    if (state.aiMatches) {
+      crumb.push('<span class="crumb-sep">·</span>', esc(t('AI 搜索', 'AI search')) + ' "' + esc(state.aiQuery) + '"');
+    } else if (state.q.trim()) {
+      crumb.push('<span class="crumb-sep">·</span>', esc(t('关键词', 'for')) + ' "' + esc(state.q.trim()) + '"');
+    }
     $('#crumb').innerHTML = crumb.join(' ');
 
     var out = blocksHtml(hit);
@@ -144,6 +176,21 @@
     $('#empty').hidden = out.shown > 0;
     body.classList.toggle('is-list', state.view === 'list');
     mountLogos($('#list'));
+  }
+
+  /* hero 上的分类 tab：和侧栏分类同源同步，选中态跟着 state.sec。 */
+  function renderHeroTabs() {
+    var el = $('#hero-tabs');
+    if (!el) return;
+    var counts = {};
+    ALL.forEach(function (e) { counts[e.section] = (counts[e.section] || 0) + 1; });
+    function tab(key, label, n) {
+      return '<button type="button" class="hero-tab" role="tab" data-sec="' + esc(key) +
+        '" aria-selected="' + (state.sec === key) + '">' + esc(label) +
+        '<span class="cnt">' + n + '</span></button>';
+    }
+    el.innerHTML = tab('all', t('全部', 'All'), ALL.length) +
+      SECS.map(function (s) { return tab(s.key, lang === 'en' ? s.en : s.zh, counts[s.key] || 0); }).join('');
   }
 
   /* 首页那条品牌 logo 墙：从已收录条目里按域名去重，
@@ -181,9 +228,114 @@
 
   function renderAll() {
     renderCats();
+    renderHeroTabs();
     renderList();
     renderAds();
     writeUrl();
+  }
+
+  /* ── AI 搜索 ──────────────────────────────────────────────
+     回车 / 点「AI 搜索」/ 点热词触发。Worker 没配或调用失败时降级到本地关键词过滤。
+     模型只回条目名 + 理由，完整字段由 Worker 从本地数据回填，前端再渲染成卡片。 */
+  var aiPanel = $('#ai-panel');
+  var aiBody = $('#ai-body');
+  var aiMeta = $('#ai-meta');
+  var aiBtn = $('#ai-search-btn');
+  var aiReqId = 0;
+
+  function setAiLoading(on) {
+    if (!aiBtn) return;
+    aiBtn.disabled = on;
+    aiBtn.classList.toggle('is-loading', on);
+  }
+
+  function closeAiPanel() {
+    state.aiMatches = null;
+    state.aiQuery = '';
+    if (aiPanel) aiPanel.hidden = true;
+    renderList();
+    writeUrl();
+  }
+
+  function aiLoadingHtml() {
+    return '<div class="ai-loading"><span class="dot"></span><span class="dot"></span><span class="dot"></span>' +
+      '<span>' + esc(t('AI 正在检索知识库…', 'AI is searching the knowledge base…')) + '</span></div>';
+  }
+
+  function renderAiResult(data, q) {
+    var matches = Array.isArray(data.matches) ? data.matches : [];
+    state.aiMatches = matches.map(function (m) { return m.name; });
+    state.aiQuery = q;
+
+    var summary = data.summary
+      ? '<p class="ai-summary">' + esc(data.summary) + '</p>'
+      : '';
+    var cards = matches.map(function (m) {
+      var sec = byKey[m.section] || {};
+      var color = sec.color || 'var(--accent)';
+      var secLabel = lang === 'en' ? (sec.en || sec.key) : (sec.zh || sec.key);
+      return '<a class="ai-match" style="--cat:' + esc(color) + '" href="' + esc(m.url) + '" target="_blank" rel="noopener noreferrer">' +
+        '<span class="ai-match-sec">' + esc(secLabel || '') + '</span>' +
+        '<span class="ai-match-name">' + esc(m.name) +
+          '<svg class="card-ext" viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><path d="M6 3H3v10h10v-3M9 3h4v4M13 3L7 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>' +
+        '</span>' +
+        (m.reason ? '<p class="ai-match-reason">' + esc(m.reason) + '</p>' : '') +
+      '</a>';
+    }).join('');
+
+    aiBody.innerHTML = summary +
+      (cards ? '<div class="ai-matches">' + cards + '</div>'
+             : '<p class="ai-error">' + esc(t('没有找到相关条目，换个说法试试。', 'No relevant entries — try rephrasing.')) + '</p>');
+    if (aiMeta) {
+      aiMeta.textContent = (data.model ? data.model.replace('@cf/', '') : '') +
+        (data.ms ? ' · ' + (data.ms / 1000).toFixed(1) + 's' : '') +
+        ' · ' + matches.length + ' ' + esc(t('个结果', 'results'));
+    }
+    aiPanel.hidden = false;
+    renderList();
+    writeUrl();
+  }
+
+  function runAiSearch(q) {
+    q = String(q || '').trim();
+    if (!q) return;
+    /* 没配 Worker：直接本地过滤，不弹面板 */
+    if (!WORKER_BASE) {
+      state.q = q; qEl.value = q;
+      state.aiMatches = null;
+      if (aiPanel) aiPanel.hidden = true;
+      renderList(); writeUrl();
+      return;
+    }
+    var reqId = ++aiReqId;
+    setAiLoading(true);
+    aiPanel.hidden = false;
+    aiBody.innerHTML = aiLoadingHtml();
+    if (aiMeta) aiMeta.textContent = '';
+
+    fetch(WORKER_BASE + '/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ q: q, lang: lang })
+    }).then(function (res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    }).then(function (data) {
+      if (reqId !== aiReqId) return;   // 已有更新的请求，丢弃旧结果
+      if (data.error) throw new Error(data.error);
+      renderAiResult(data, q);
+    }).catch(function () {
+      if (reqId !== aiReqId) return;
+      /* 降级：本地关键词过滤 + 面板里提示 */
+      state.q = q; qEl.value = q;
+      state.aiMatches = null;
+      aiBody.innerHTML = '<p class="ai-error">' +
+        esc(t('AI 搜索暂不可用，已切换为本地关键词匹配。', 'AI search unavailable — fell back to local keyword matching.')) + '</p>';
+      if (aiMeta) aiMeta.textContent = t('本地模式', 'local mode');
+      renderList(); writeUrl();
+    }).finally(function () {
+      if (reqId === aiReqId) setAiLoading(false);
+    });
   }
 
   /* ── 事件 ─────────────────────────────────────────────── */
@@ -212,9 +364,46 @@
   qEl.value = state.q;
   qEl.addEventListener('input', function () {
     state.q = qEl.value;
+    /* 一开始打字就退出 AI 结果模式，回到实时本地过滤 */
+    if (state.aiMatches) { state.aiMatches = null; state.aiQuery = ''; if (aiPanel) aiPanel.hidden = true; }
     renderList();
     writeUrl();
   });
+
+  /* 回车 / 点「AI 搜索」→ 语义搜索 */
+  $('#search-form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    runAiSearch(qEl.value);
+  });
+
+  /* 热词：填进搜索框并立即 AI 搜索。
+     没配 Worker 时退化为标签筛选（data-local-tag），不做自然语言关键词匹配。 */
+  document.querySelectorAll('.hot-tag').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var q = lang === 'en' ? (b.getAttribute('data-hot-en') || b.dataset.hot) : b.dataset.hot;
+      if (!WORKER_BASE) {
+        state.q = ''; qEl.value = '';
+        state.aiMatches = null; state.aiQuery = '';
+        if (aiPanel) aiPanel.hidden = true;
+        state.tag = b.getAttribute('data-local-tag') || '';
+        renderAll();
+        return;
+      }
+      qEl.value = q;
+      runAiSearch(q);
+    });
+  });
+
+  /* hero 分类 tab：和侧栏一样切板块 */
+  $('#hero-tabs').addEventListener('click', function (ev) {
+    var b = ev.target.closest('.hero-tab');
+    if (!b || state.sec === b.dataset.sec) return;
+    state.sec = b.dataset.sec;
+    state.tag = '';
+    renderAll();
+  });
+
+  if ($('#ai-close')) $('#ai-close').addEventListener('click', closeAiPanel);
 
   $('#sort').addEventListener('change', function (ev) {
     state.sort = ev.target.value;
@@ -254,6 +443,8 @@
 
   $('#reset').addEventListener('click', function () {
     state.q = ''; state.tag = ''; state.sec = 'all';
+    state.aiMatches = null; state.aiQuery = '';
+    if (aiPanel) aiPanel.hidden = true;
     qEl.value = '';
     renderAll();
     qEl.focus();
@@ -270,7 +461,12 @@
     }
     if (ev.key === '/' && !typing) { ev.preventDefault(); qEl.focus(); return; }
     if (ev.key === 'Escape' && document.activeElement === qEl) {
-      if (qEl.value) { qEl.value = ''; state.q = ''; renderList(); writeUrl(); }
+      if (qEl.value || state.aiMatches) {
+        qEl.value = ''; state.q = '';
+        state.aiMatches = null; state.aiQuery = '';
+        if (aiPanel) aiPanel.hidden = true;
+        renderList(); writeUrl();
+      }
       qEl.blur();
     }
   });

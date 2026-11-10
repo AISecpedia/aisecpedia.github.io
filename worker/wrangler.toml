@@ -1,0 +1,12 @@
+name = "aisec123-search"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+# Workers AI 绑定：免费额度内调用，无需 API key
+[ai]
+binding = "AI"
+
+# 生产部署后把这里改成你的 Worker 域名，前端会读 window.AISEC123_WORKER
+# 本地开发：npx wrangler dev --remote（--remote 才能用 Workers AI）
+[vars]
+ALLOWED_ORIGIN = "https://aisec123.github.io"

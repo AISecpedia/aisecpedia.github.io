@@ -77,20 +77,16 @@ button, select, input { font: inherit; color: inherit; }
 .brand { display: flex; align-items: center; gap: .6rem; color: var(--text); }
 .brand:hover { text-decoration: none; }
 
-/* ── 品牌锁定图 ────────────────────────────────────────────
-   用户给的 logo 截图：深海军蓝底上一条白带，蓝字压在带内，字外面还裹着
-   一圈贴纸式的白描边。脚本把字连同描边抠成透明底，所以两个主题都不垫底板：
-   浅色页头接近白，白描边直接融进去，只剩蓝字；暗色页头是 #12181b，
-   白描边成一圈柔光把字托住。这样 logo 是「长」在页头上的，看不到图片边界。
-   暗色主题换提亮版素材：原图「Sec」是深蓝，压 #12181b 只有 2.1:1，
-   提亮到 4.2:1 才读得清（见 scripts/make-brand-lockup.py 的 glow_variant）。
-   hover 只做轻微变暗，不给 logo 加位移/放大那套俏皮动作。 */
-.brand-lockup-wrap { display: block; line-height: 0; }
-.brand-lockup { display: block; height: 38px; width: auto; transition: opacity .18s ease; }
-.brand-lockup-dark { display: none; }
-.brand:hover .brand-lockup { opacity: .85; }
-[data-theme="dark"] .brand-lockup:not(.brand-lockup-dark) { display: none; }
-[data-theme="dark"] .brand-lockup-dark { display: block; }
+/* ── 品牌标 ────────────────────────────────────────────────
+   内联 SVG mark（盾+书页）+ 活文本字标/副标。颜色全走主题变量，
+   浅暗两套自动切换，不再需要位图和提亮版素材。 */
+.brand-mark { width: 34px; height: 34px; flex: none; transition: opacity .18s ease; }
+.brand-text { display: flex; flex-direction: column; line-height: 1.15; }
+.brand-word { font-weight: 800; font-size: 1.3rem; letter-spacing: -.02em; color: var(--text); }
+.brand-pedia { color: var(--accent); }
+.brand-tag { display: flex; justify-content: space-between; width: 100%; font-size: .6875rem; color: var(--text-muted); }
+[data-lang="en"] .brand-tag { font-size: .6rem; }
+.brand:hover .brand-mark { opacity: .85; }
 
 .topnav { display: flex; align-items: center; gap: .35rem; }
 
@@ -247,76 +243,151 @@ button, select, input { font: inherit; color: inherit; }
   font-size: .9375rem;
 }
 
-.hero-cta { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.15rem; }
+/* ── aminer 式搜索中心 ──────────────────────────────────────
+   大搜索框落在深色 hero 上：白底框 + 亮青按钮，对比强、一眼是搜索站。
+   输入即本地过滤；回车 / 点按钮走 Worker 语义搜索。 */
+.hero-search { margin-top: 1.5rem; max-width: 760px; }
 
-.btn-primary, .btn-ghost {
+.hero-search-box {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .3rem .3rem .3rem .9rem;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 32px -12px rgb(0 0 0 / .5);
+}
+.hero-search-box:focus-within { box-shadow: 0 0 0 3px rgb(127 208 230 / .55), 0 12px 32px -12px rgb(0 0 0 / .5); }
+.hero-search-ico { color: #8a939b; flex: none; }
+.hero-search-box input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #1a2226;
+  font-size: 1rem;
+  line-height: 1.5;
+  padding: .55rem 0;
+}
+.hero-search-box input::placeholder { color: #9aa3ab; }
+.hero-search-box input::-webkit-search-cancel-button { cursor: pointer; }
+
+.hero-search-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  flex: none;
+  padding: .6rem 1.15rem;
+  border: 0;
+  border-radius: 9px;
+  background: linear-gradient(180deg, #3c93ae 0%, #2f7d95 100%);
+  color: #fff;
+  font-size: .9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter .15s ease;
+}
+.hero-search-btn:hover { filter: brightness(1.1); }
+.hero-search-btn:disabled { opacity: .65; cursor: progress; }
+.hero-search-btn.is-loading svg { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 分类 tab：横排 pill，选中态亮青底。和侧栏分类同步。 */
+.hero-tabs { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .9rem; }
+.hero-tab {
+  padding: .3rem .8rem;
+  border: 1px solid rgb(255 255 255 / .28);
+  border-radius: 999px;
+  background: rgb(255 255 255 / .08);
+  color: rgb(255 255 255 / .88);
+  font-size: .8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+.hero-tab:hover { background: rgb(255 255 255 / .16); text-decoration: none; }
+.hero-tab[aria-selected="true"] {
+  border-color: #7fd0e6;
+  background: rgb(127 208 230 / .22);
+  color: #fff;
+  font-weight: 600;
+}
+.hero-tab .cnt { opacity: .6; margin-left: .3rem; font-size: .72rem; }
+
+.hero-hot { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin: .85rem 0 0; }
+.hero-hot-label { font-size: .78rem; color: rgb(255 255 255 / .6); }
+.hot-tag {
+  padding: .18rem .6rem;
+  border: 0;
+  border-radius: 6px;
+  background: rgb(255 255 255 / .1);
+  color: rgb(255 255 255 / .82);
+  font-size: .78rem;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.hot-tag:hover { background: rgb(127 208 230 / .25); color: #fff; }
+
+/* ── AI 答案面板 ────────────────────────────────────────────
+   落在 hero 下方，跟主题变量走（浅/暗都适配）。aminer 式「AI 总结 + 相关结果」。 */
+.ai-panel { margin-top: 1.1rem; }
+.ai-panel-inner {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-soft);
+  padding: 1rem 1.15rem 1.15rem;
+}
+.ai-head { display: flex; align-items: center; gap: .6rem; margin-bottom: .7rem; }
+.ai-badge {
   display: inline-flex;
   align-items: center;
   gap: .35rem;
-  padding: .42rem .9rem;
+  padding: .2rem .6rem;
   border-radius: 999px;
-  font-size: .8125rem;
-  font-weight: 600;
-  line-height: 1.4;
-}
-/* 主按钮在深色面板上要更亮一档：#2f7d95 压在近黑底上会闷掉 */
-.btn-primary {
-  border: 1px solid #58b6d4;
-  background: linear-gradient(180deg, #3c93ae 0%, #2f7d95 100%);
-  color: #fff;
-  box-shadow: 0 6px 18px -6px rgb(88 182 212 / .55);
-}
-.btn-primary:hover { color: #fff; text-decoration: none; filter: brightness(1.1); }
-/* 次按钮是描边白，不是 --bg 底的浅色描边 —— 深色面板上浅色描边看不见 */
-.btn-ghost {
-  border: 1px solid rgb(255 255 255 / .38);
-  background: rgb(255 255 255 / .08);
-  color: #fff;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-}
-.btn-ghost:hover {
-  border-color: #fff;
-  background: rgb(255 255 255 / .16);
-  color: #fff;
-  text-decoration: none;
-}
-
-/* 收录范围：内容类型图例条。原来是品牌 logo 墙，换成图标 + 名称 ——
-   一眼看清"这张图里到底有什么"，比一排灰度 logo 更直接。
-   整组是静态 HTML，不靠 JS 渲染，爬虫不执行 JS 也读得到。
-   落在深色面板上，所以用半透明白描边，不能用 --bg/--border
-   （浅色变量在深底上会反白成一片亮块）。
-   图标统一一个青色、不搞十二种颜色：深色面板上彩虹一排很吵。 */
-.wall { margin-top: 1.6rem; padding-top: 1.1rem; border-top: 1px solid rgb(255 255 255 / .16); }
-.wall-label {
-  margin: 0 0 .6rem;
-  font-size: .6875rem;
-  font-weight: 700;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: rgb(255 255 255 / .58);
-}
-.cov-list { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0; padding: 0; list-style: none; }
-.cov-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: .38rem;
-  padding: .26rem .66rem .26rem .5rem;
-  border: 1px solid rgb(255 255 255 / .16);
-  border-radius: 999px;
-  background: rgb(255 255 255 / .07);
+  background: var(--accent-soft);
+  color: var(--accent);
   font-size: .75rem;
-  line-height: 1.4;
-  color: rgb(255 255 255 / .86);
-  transition: border-color .18s ease, background .18s ease, transform .18s ease;
+  font-weight: 700;
 }
-.cov-chip:hover {
-  border-color: rgb(127 208 230 / .55);
-  background: rgb(127 208 230 / .13);
-  transform: translateY(-1px);
+.ai-meta { font-size: .72rem; color: var(--text-muted); }
+.ai-close {
+  margin-left: auto;
+  width: 26px; height: 26px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
 }
-.cov-ico { width: 14px; height: 14px; color: #7fd0e6; flex: none; }
+.ai-close:hover { background: var(--border); color: var(--text); }
+.ai-summary { margin: 0 0 .9rem; font-size: .9375rem; line-height: 1.7; color: var(--text); }
+.ai-summary strong { color: var(--accent); }
+
+.ai-matches { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: .6rem; }
+.ai-match {
+  display: block;
+  padding: .7rem .85rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--cat, var(--accent));
+  border-radius: 8px;
+  background: var(--bg);
+  transition: border-color .15s ease, transform .15s ease;
+}
+.ai-match:hover { border-color: var(--accent); transform: translateY(-1px); text-decoration: none; }
+.ai-match-name { display: flex; align-items: center; gap: .4rem; font-weight: 600; font-size: .9rem; color: var(--text); }
+.ai-match-name .card-ext { color: var(--text-muted); }
+.ai-match-reason { margin: .3rem 0 0; font-size: .8125rem; line-height: 1.55; color: var(--text-muted); }
+.ai-match-sec { font-size: .68rem; color: var(--cat, var(--accent)); font-weight: 600; }
+
+.ai-loading { display: flex; align-items: center; gap: .5rem; color: var(--text-muted); font-size: .875rem; padding: .3rem 0; }
+.ai-loading .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: blink 1.2s ease-in-out infinite; }
+.ai-loading .dot:nth-child(2) { animation-delay: .2s; }
+.ai-loading .dot:nth-child(3) { animation-delay: .4s; }
+@keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+.ai-error { color: var(--text-muted); font-size: .875rem; }
 
 /* ── 两栏版式：左分类栏 + 右详情区 ────────────────────────── */
 .layout {
@@ -873,5 +944,5 @@ mark {
   .card:hover { transform: none; }
   .hero-art path, .kicker-dot { animation: none; }
   .cov-chip { transition: none; }
-  .brand-lockup { transition: none; }
+  .brand-mark { transition: none; }
 }
