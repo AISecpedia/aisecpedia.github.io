@@ -1,4 +1,4 @@
-/* 生成文件，别手改 —— 真源是 github.com/AISec123/AISecDB 的 entries.json。
+/* 生成文件，别手改 —— 真源是 github.com/AISecpedia/AISecDB 的 entries.json。
  * 重新生成：node scripts/sync-data.js [--local <path>]
  */
 export const DATA = {

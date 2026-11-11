@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* 把 AISecDB 的 entries.json 同步成 Worker 用的 src/data.js（ESM 导出）。
  *
- * 与站点 scripts/pull-data.js 同源，但产物格式不同：站点要 window.AISEC123（浏览器），
+ * 与站点 scripts/pull-data.js 同源，但产物格式不同：站点要 window.AISECPEDIA（浏览器），
  * Worker 要 export const DATA（ESM）。这里只取 sections + entries + updated，
  * 不带 sponsors / friends（那些是站点展示位，搜索用不到）。
  *
@@ -16,7 +16,7 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 const OUT = path.join(ROOT, 'src', 'data.js');
-const SOURCE = 'https://raw.githubusercontent.com/AISec123/AISecDB/main/entries.json';
+const SOURCE = 'https://raw.githubusercontent.com/AISecpedia/AISecDB/main/entries.json';
 
 function arg(name) {
   const i = process.argv.indexOf(name);
@@ -47,7 +47,7 @@ async function main() {
   };
 
   const header = [
-    '/* 生成文件，别手改 —— 真源是 github.com/AISec123/AISecDB 的 entries.json。',
+    '/* 生成文件，别手改 —— 真源是 github.com/AISecpedia/AISecDB 的 entries.json。',
     ' * 重新生成：node scripts/sync-data.js [--local <path>]',
     ' */',
     'export const DATA = ' + JSON.stringify(slim, null, 2) + ';',

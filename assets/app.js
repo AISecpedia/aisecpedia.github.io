@@ -1,24 +1,24 @@
-/* AISec123 交互：筛选 / 搜索 / 排序 / 视图 / 双语 / 暗色 / URL 状态同步。
-   数据来自 data/entries.js（window.AISEC123），这里只负责渲染。
+/* AISecpedia 交互：筛选 / 搜索 / 排序 / 视图 / 双语 / 暗色 / URL 状态同步。
+   数据来自 data/entries.js（window.AISECPEDIA），这里只负责渲染。
    没有构建步骤、没有依赖，改完 push 就上线。 */
 (function () {
   'use strict';
 
-  var D = window.AISEC123;
+  var D = window.AISECPEDIA;
   if (!D) return;
 
   var root = document.documentElement;
   var body = document.body;
-  var KEY = 'aisec123';
+  var KEY = 'aisecpedia';
   var LS = {
     get: function (k, fb) { try { return localStorage.getItem(KEY + '-' + k) || fb; } catch (e) { return fb; } },
     set: function (k, v) { try { localStorage.setItem(KEY + '-' + k, v); } catch (e) {} }
   };
 
   var state = { sec: 'all', q: '', tag: '', sort: 'default', view: 'grid', aiMatches: null, aiQuery: '' };
-  /* AI 搜索 Worker 域名（index.html 里 window.AISEC123_WORKER 配置）。
+  /* AI 搜索 Worker 域名（index.html 里 window.AISECPEDIA_WORKER 配置）。
      留空 = 不调 LLM，搜索框退化为纯本地关键词过滤。 */
-  var WORKER_BASE = (window.AISEC123_WORKER || '').replace(/\/+$/, '');
+  var WORKER_BASE = (window.AISECPEDIA_WORKER || '').replace(/\/+$/, '');
   var lang = LS.get('lang', 'zh');
   var theme = LS.get('theme', window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 
@@ -37,7 +37,7 @@
   /* 渲染逻辑全在 assets/render.js，和 scripts/gen-static.js 共用一份，
      这样预渲染进 index.html 的静态卡片和这里画出来的必然一致。
      getState 是惰性的：语言、搜索词、排序变了不用重建 renderer。 */
-  var R = window.AISEC123Render.create(D, function () {
+  var R = window.AISECPEDIARender.create(D, function () {
     return { lang: lang, q: state.q, sec: state.sec, tag: state.tag, sort: state.sort };
   });
 
@@ -209,7 +209,7 @@
         '</span>' +
       '</a>';
     }).join('') +
-      '<a class="ad ad-empty" href="https://github.com/AISec123/aisec123.github.io/issues/new">' +
+      '<a class="ad ad-empty" href="https://github.com/AISecpedia/aisecpedia.github.io/issues/new">' +
         '<span class="ad-tag">' + esc(t('虚位', 'OPEN')) + '</span>' +
         '<span class="ad-body"><span class="ad-text"><b>' + esc(t('广告位招租', 'Advertise here')) + '</b>' +
         '<span>' + esc(t('合作请开 issue，展示位与收录互不影响。', 'Open an issue — placements never influence listings.')) + '</span></span></span>' +

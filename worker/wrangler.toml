@@ -1,4 +1,4 @@
-name = "aisec123-search"
+name = "aisecpedia-search"
 main = "src/index.js"
 compatibility_date = "2025-01-01"
 
@@ -6,7 +6,7 @@ compatibility_date = "2025-01-01"
 [ai]
 binding = "AI"
 
-# 生产部署后把这里改成你的 Worker 域名，前端会读 window.AISEC123_WORKER
+# 生产部署后把这里改成你的 Worker 域名，前端会读 window.AISECPEDIA_WORKER
 # 本地开发：npx wrangler dev --remote（--remote 才能用 Workers AI）
 [vars]
-ALLOWED_ORIGIN = "https://aisec123.github.io"
+ALLOWED_ORIGIN = "https://aisecpedia.github.io"

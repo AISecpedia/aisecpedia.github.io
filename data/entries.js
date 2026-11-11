@@ -1,4 +1,4 @@
-/* 生成文件，别手改 —— 真源是 github.com/AISec123/AISecDB 的 entries.json。
+/* 生成文件，别手改 —— 真源是 github.com/AISecpedia/AISecDB 的 entries.json。
  *
  * 重新生成：
  *   node scripts/pull-data.js                             从 AISecDB 线上拉
@@ -7,7 +7,7 @@
  * sponsors / friends 是站点自有的展示位和友链，不属于数据集，
  * 存在 data/site-extra.json，由脚本合并进来。
  */
-window.AISEC123 = {
+window.AISECPEDIA = {
   "updated": "2026-10-21",
   "sections": [
     {

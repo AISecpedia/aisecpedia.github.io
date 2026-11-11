@@ -27,7 +27,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const INDEX = path.join(ROOT, 'index.html');
 const SITEMAP = path.join(ROOT, 'sitemap.xml');
-const SITE = 'https://aisec123.github.io/';
+const SITE = 'https://aisecpedia.github.io/';
 
 /* entries.js 是 <script> 而不是 JSON（为了让 file:// 双击也能跑，见该文件头注释），
    所以这里 shim 一个 window 再执行，而不是自己写一套 JS 字面量解析器。 */
@@ -35,8 +35,8 @@ function loadData() {
   const src = fs.readFileSync(path.join(ROOT, 'data', 'entries.js'), 'utf8');
   const win = {};
   new Function('window', src)(win);
-  if (!win.AISEC123) throw new Error('data/entries.js 没有设置 window.AISEC123');
-  return win.AISEC123;
+  if (!win.AISECPEDIA) throw new Error('data/entries.js 没有设置 window.AISECPEDIA');
+  return win.AISECPEDIA;
 }
 
 /* 板块 → schema.org 类型 */

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* 从 AISecDB 拉数据集，生成 data/entries.js。
  *
- * 数据真源是 github.com/AISec123/AISecDB 的 entries.json；这个仓库里那份是
+ * 数据真源是 github.com/AISecpedia/AISecDB 的 entries.json；这个仓库里那份是
  * 构建产物（GitHub Pages 直接发静态文件，所以必须提交）。
  *
  * 为什么不在运行时跨域去 raw 取：raw.githubusercontent.com 在国内经常被阻断，
@@ -24,7 +24,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const OUT = path.join(ROOT, 'data', 'entries.js');
 const EXTRA = path.join(ROOT, 'data', 'site-extra.json');
-const SOURCE = 'https://raw.githubusercontent.com/AISec123/AISecDB/main/entries.json';
+const SOURCE = 'https://raw.githubusercontent.com/AISecpedia/AISecDB/main/entries.json';
 
 function arg(name) {
   const i = process.argv.indexOf(name);
@@ -120,7 +120,7 @@ function main() {
     };
 
     const header = [
-      '/* 生成文件，别手改 —— 真源是 github.com/AISec123/AISecDB 的 entries.json。',
+      '/* 生成文件，别手改 —— 真源是 github.com/AISecpedia/AISecDB 的 entries.json。',
       ' *',
       ' * 重新生成：',
       ' *   node scripts/pull-data.js                             从 AISecDB 线上拉',
@@ -129,7 +129,7 @@ function main() {
       ' * sponsors / friends 是站点自有的展示位和友链，不属于数据集，',
       ' * 存在 data/site-extra.json，由脚本合并进来。',
       ' */',
-      'window.AISEC123 = ' + JSON.stringify(merged, null, 2) + ';',
+      'window.AISECPEDIA = ' + JSON.stringify(merged, null, 2) + ';',
       ''
     ].join('\n');
 

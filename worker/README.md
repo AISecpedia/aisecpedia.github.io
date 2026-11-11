@@ -1,7 +1,7 @@
-# AISec123 搜索 Worker
+# AISecpedia 搜索 Worker
 
-Cloudflare Workers AI 代理，给 [aisec123.github.io](https://aisec123.github.io) 的搜索框提供 LLM 语义搜索。
-数据来自 [AISecDB](https://github.com/AISec123/AISecDB)，模型用 Workers AI 免费额度内的 `@cf/meta/llama-3.1-8b-instruct-fp8`。
+Cloudflare Workers AI 代理，给 [aisecpedia.github.io](https://aisecpedia.github.io) 的搜索框提供 LLM 语义搜索。
+数据来自 [AISecDB](https://github.com/AISecpedia/AISecDB)，模型用 Workers AI 免费额度内的 `@cf/meta/llama-3.1-8b-instruct-fp8`。
 
 ## 架构
 
@@ -14,7 +14,7 @@ Cloudflare Workers AI 代理，给 [aisec123.github.io](https://aisec123.github.
 
 - 模型只返回「条目名 + 理由」，URL / 描述由 Worker 从本地数据回填，**杜绝幻觉链接**。
 - 数据发布前同步进 `src/data.js`，运行时不跨域取数据（raw.githubusercontent.com 国内常被阻断）。
-- CORS 只放行 `ALLOWED_ORIGIN`（默认 `https://aisec123.github.io`）+ localhost 调试。
+- CORS 只放行 `ALLOWED_ORIGIN`（默认 `https://aisecpedia.github.io`）+ localhost 调试。
 
 ## 端点
 
@@ -39,11 +39,11 @@ npm run sync
 npm run dev                 # 默认 http://localhost:8787
 
 # 3. 部署到 Cloudflare
-npm run deploy              # 输出 https://aisec123-search.<你的子域>.workers.dev
+npm run deploy              # 输出 https://aisecpedia-search.<你的子域>.workers.dev
 ```
 
 部署成功后记下 Worker 域名，填进前端 `assets/app.js` 顶部的 `WORKER_BASE`
-（或 `index.html` 里的 `window.AISEC123_WORKER`）。
+（或 `index.html` 里的 `window.AISECPEDIA_WORKER`）。
 
 ## 免费额度
 

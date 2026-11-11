@@ -1,6 +1,6 @@
-/* AISec123 搜索 Worker —— Cloudflare Workers AI 代理。
+/* AISecpedia 搜索 Worker —— Cloudflare Workers AI 代理。
  *
- * 数据真源是 github.com/AISec123/AISecDB 的 entries.json，发布前用
+ * 数据真源是 github.com/AISecpedia/AISecDB 的 entries.json，发布前用
  * scripts/sync-data.js 同步成 src/data.js（ESM 导出），Worker 启动即加载，
  * 不在运行时跨域取数据（raw.githubusercontent.com 在国内常被阻断）。
  *
@@ -31,7 +31,7 @@ const CATALOG = ENTRIES.map((e) => ({
   desc_en: e.desc_en || '',
 }));
 
-const SYSTEM_ZH = `你是 AISec123 的 AI 安全搜索助手。下面是收录的全部条目（JSON 数组）：
+const SYSTEM_ZH = `你是 AISecpedia 的 AI 安全搜索助手。下面是收录的全部条目（JSON 数组）：
 ${JSON.stringify(CATALOG)}
 
 用户会用自然语言描述需求。你的任务：
@@ -47,7 +47,7 @@ ${JSON.stringify(CATALOG)}
 - 没有匹配时 matches 为空数组，summary 说明没找到并建议换关键词。
 - 不要输出 JSON 以外的任何文字、markdown 或代码围栏。`;
 
-const SYSTEM_EN = `You are the AISec123 AI security search assistant. Here is the full catalog (JSON array):
+const SYSTEM_EN = `You are the AISecpedia AI security search assistant. Here is the full catalog (JSON array):
 ${JSON.stringify(CATALOG)}
 
 The user describes a need in natural language. Your job:

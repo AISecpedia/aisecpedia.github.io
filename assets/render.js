@@ -1,4 +1,4 @@
-/* AISec123 渲染层：数据 → HTML 字符串，全程不碰 DOM。
+/* AISecpedia 渲染层：数据 → HTML 字符串，全程不碰 DOM。
  *
  * 浏览器里的 app.js 和 node 里的 scripts/gen-static.js 共用这一份，而且是必须共用：
  * 预渲染进 index.html 的静态卡片是给不执行 JS 的爬虫（百度、GPTBot、ClaudeBot）看的，
@@ -8,12 +8,12 @@
  * 状态通过 getState() 惰性读取，所以同一个 renderer 实例能跟着语言切换、搜索、
  * 排序变化，不用重建；预渲染脚本传一个固定状态就行。
  *
- * 双环境导出：浏览器挂 window.AISEC123Render，node 走 module.exports。
+ * 双环境导出：浏览器挂 window.AISECPEDIARender，node 走 module.exports。
  */
 (function (root, factory) {
   var api = factory();
   if (typeof module === 'object' && module.exports) module.exports = api;
-  else root.AISEC123Render = api;
+  else root.AISECPEDIARender = api;
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
@@ -48,7 +48,7 @@
 
     var ALL = ((D && D.entries) || []).filter(function (e) {
       if (!e || !e.name || !e.url) return false;
-      if (!byKey[e.section]) console.warn('[aisec123] 未知 section，条目已跳过:', e.name, e.section);
+      if (!byKey[e.section]) console.warn('[aisecpedia] 未知 section，条目已跳过:', e.name, e.section);
       return !!byKey[e.section];
     });
 
